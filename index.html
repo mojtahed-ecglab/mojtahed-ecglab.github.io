@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>[Project Name] — ECG Fiducial-Point Detection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FCFAF8;
+    --grid-min:#F4DAD4;
+    --grid-maj:#E9B6AD;
+    --ink:#1A1614;
+    --ink-soft:#5A514D;
+    --accent:#C03A2B;
+    --accent-soft:#F6E4E0;
+    --rule:#E7DDD7;
+    --maxw:980px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,sans-serif;
+    font-size:17px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 28px;}
+  a{color:var(--ink);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--grid-maj);}
+  a:hover{text-decoration-color:var(--accent);color:var(--accent);}
+  a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    position:relative;
+    border-bottom:1px solid var(--rule);
+    background-color:#FFF8F6;
+    background-image:
+      linear-gradient(var(--grid-min) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid-min) 1px,transparent 1px),
+      linear-gradient(var(--grid-maj) 1px,transparent 1px),
+      linear-gradient(90deg,var(--grid-maj) 1px,transparent 1px);
+    background-size:13px 13px,13px 13px,65px 65px,65px 65px;
+    overflow:hidden;
+  }
+  .hero-inner{max-width:var(--maxw);margin:0 auto;padding:64px 28px 0;}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--accent);margin:0 0 18px;
+  }
+  h1{
+    font-family:"Space Grotesk",sans-serif;
+    font-weight:700;font-size:clamp(2.4rem,6vw,4.1rem);
+    line-height:1.02;letter-spacing:-.02em;margin:0 0 16px;
+  }
+  .lede{
+    font-size:1.16rem;color:var(--ink-soft);max-width:54ch;margin:0 0 40px;
+  }
+  .trace-band{width:100%;display:block;}
+  .trace{
+    width:100%;height:auto;display:block;
+  }
+  .trace path.signal{
+    fill:none;stroke:var(--ink);stroke-width:2.2;
+    stroke-linecap:round;stroke-linejoin:round;
+  }
+  .peak-dot{fill:var(--accent);}
+  .peak-label{
+    font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:500;
+    fill:var(--accent);text-anchor:middle;
+  }
+  .peak-tick{stroke:var(--accent);stroke-width:1;stroke-dasharray:2 3;opacity:.6;}
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:62px 0;border-bottom:1px solid var(--rule);}
+  .sec-label{
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+    letter-spacing:.2em;text-transform:uppercase;color:var(--ink-soft);
+    margin:0 0 26px;
+  }
+  .overview p{font-size:1.18rem;max-width:62ch;margin:0;}
+
+  /* ---------- OUTPUT CARDS ---------- */
+  .cards{display:grid;gap:20px;}
+  .card{
+    position:relative;
+    border:1px solid var(--rule);
+    border-left:3px solid var(--accent);
+    background:#fff;
+    padding:26px 28px;
+    transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;
+  }
+  .card:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(26,22,20,.07);}
+  .card.locked{border-left-color:var(--grid-maj);background:#FCFAF9;}
+  .card-head{display:flex;justify-content:space-between;align-items:baseline;gap:18px;flex-wrap:wrap;}
+  .card h3{
+    font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:1.45rem;
+    margin:0;letter-spacing:-.01em;
+  }
+  .tag{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;
+    letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;
+    padding:4px 9px;border-radius:2px;
+    background:var(--accent-soft);color:var(--accent);
+  }
+  .tag.muted{background:#EFE9E5;color:var(--ink-soft);}
+  .card p.desc{margin:14px 0 16px;color:var(--ink-soft);max-width:64ch;}
+  .meta{
+    font-family:"IBM Plex Mono",monospace;font-size:13.5px;line-height:1.9;
+    margin:0;padding:0;list-style:none;
+  }
+  .meta li{display:flex;gap:10px;flex-wrap:wrap;}
+  .meta .k{color:var(--ink-soft);min-width:96px;}
+  .meta .v{color:var(--ink);}
+  .locked-note{
+    font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-soft);
+    margin:14px 0 0;display:flex;align-items:center;gap:8px;
+  }
+  .lock{width:13px;height:13px;display:inline-block;flex:0 0 auto;}
+
+  /* ---------- CITE ---------- */
+  .cite{
+    background:#fff;border:1px solid var(--rule);
+    font-family:"IBM Plex Mono",monospace;font-size:13.5px;line-height:1.7;
+    padding:22px 24px;margin:0 0 18px;color:var(--ink);
+    white-space:pre-wrap;word-break:break-word;
+  }
+  .cite .who{color:var(--accent);}
+  .cite-label{font-weight:500;margin:0 0 8px;}
+
+  /* ---------- SMALLPRINT ---------- */
+  .smallprint p{color:var(--ink-soft);max-width:64ch;margin:0 0 14px;}
+  .contact{font-family:"IBM Plex Mono",monospace;font-size:14px;line-height:2;}
+  footer{padding:34px 0 48px;}
+  .updated{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-soft);letter-spacing:.04em;}
+
+  @media (max-width:560px){
+    body{font-size:16px;}
+    .card{padding:22px 20px;}
+    .meta .k{min-width:78px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .card{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-inner">
+    <p class="eyebrow">ECG Fiducial-Point Detection</p>
+    <h1>Advancing Trustworthy Cardiac Biomarkers</h1>
+<p class="lede">This project and its associated publications are based on my doctoral dissertation, <em>Advancing Trustworthy Cardiac Biomarkers: From Probabilistic to Deep Learning Methods for Robust ECG Peak Detection and HRV Recovery</em>. The work focuses on trustworthy ECG biomarker development through robust R-, P-, and T-wave peak localization and improved heart rate variability analysis. Its main outcomes include browser-based annotation software, an annotated multi-rate ECG dataset, detection algorithms, and hardware deployment.</p>  </div>
+  <div class="trace-band" aria-hidden="true">
+    <svg class="trace" viewBox="0 0 1200 240" preserveAspectRatio="none" role="img">
+      <!-- signal path injected by script; static fallback below -->
+      <path class="signal" id="ecg"></path>
+      <!-- peak markers over the first beat -->
+      <g id="markers"></g>
+    </svg>
+  </div>
+</header>
+
+<main>
+  <section class="overview">
+    <div class="wrap">
+      <p class="sec-label">Overview</p>
+      <p>Pooling ECG recordings across devices means reconciling different sampling rates, and the long, expert-annotated P-wave and T-wave references needed to train detectors are scarce. This project addresses both: a dataset that pairs native and correctly resampled signals with verified peak annotations, the tool used to produce those annotations, and the models built on them. Each output below has its own permanent home and identifier.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="sec-label">Outputs</p>
+      <div class="cards">
+
+        <!-- CardioAnnotate -->
+        <article class="card">
+          <div class="card-head">
+            <h3>CardioAnnotate</h3>
+            <span class="tag">Live</span>
+          </div>
+          <p class="desc">A self-contained, browser-based tool for viewing and editing ECG peak annotations. Runs entirely in the browser from a single HTML file.</p>
+          <ul class="meta">
+            <li><span class="k">Related Publication</span><span class="v">Under review</span></li>
+            <li><span class="k">Live tool</span><span class="v"><a href="http://cardioannotate.github.io/">cardioannotate.github.io</a></span></li>
+            <li><span class="k">Source</span><span class="v"><a href="https://github.com/CardioAnnotate/CardioAnnotate.github.io">GitHub repository</a></span></li>
+            <li><span class="k">Software DOI</span><span class="v"><a href="https://doi.org/10.5281/zenodo.20820831"> 10.5281/zenodo.20820831</a></span></li>
+            <li><span class="k">Sample data</span><span class="v">Zenodo bundle DOI </span></li>
+          </ul>
+        </article>
+
+        <!-- RPT15 -->
+        <article class="card">
+          <div class="card-head">
+            <h3>RPT15 Database</h3>
+            <span class="tag">Under review</span>
+          </div>
+          <p class="desc">A 42-subject single-lead ECG dataset with expert-verified R, P, and T peak annotations, released at native sampling rates and at five resampled rates produced with anti-alias and anti-imaging filtering. Derived from six open-access PhysioNet databases.</p>
+          <ul class="meta">
+            <li><span class="k">Related Publication</span><span class="v">Under review</span></li>
+            <li><span class="k">Repository</span><span class="v"><a href="#">PhysioNet record — forthcoming</a></span></li>
+            <li><span class="k">DOI</span><span class="v">PhysioNet DOI — forthcoming</span></li>
+          </ul>
+        </article>
+
+        <!-- ECGformer -->
+        <article class="card locked">
+          <div class="card-head">
+            <h3>ECGformer</h3>
+            <span class="tag muted">Patent pending</span>
+          </div>
+          <p class="desc">A deep learning model for ECG fiducial-point detection.</p>
+          <p class="locked-note">
+            <svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+            Details posted after the provisional patent application is filed. Preprint forthcoming.
+          </p>
+        </article>
+
+        <!-- Waveformer -->
+        <article class="card locked">
+          <div class="card-head">
+            <h3>Waveformer</h3>
+            <span class="tag muted">Patent pending</span>
+          </div>
+          <p class="desc">A frequency-agnostic deep learning model for ECG fiducial-point detection across sampling rates.</p>
+          <p class="locked-note">
+            <svg class="lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="1.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+            Details posted after the provisional patent application is filed. Preprint forthcoming.
+          </p>
+        </article>
+
+        <!-- Hardware -->
+        <article class="card locked">
+          <div class="card-head">
+            <h3>Hardware Deployment</h3>
+            <span class="tag muted">In preparation</span>
+          </div>
+          <p class="desc">A study on deploying the detection models on embedded hardware.</p>
+          <p class="locked-note">Link forthcoming.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="sec-label">How to cite</p>
+
+
+<p style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink-soft);margin:6px 0 0;">
+  Paper citation will be updated once the preprint or published version is available.
+</p>
+    <p class="cite-label">CardioAnnotate</p> <div class="cite"><span class="who">Mojtahed, H., Rao, R., Paolini, C., Sarkar, M.</span>. CardioAnnotate: An Interactive Toolkit for ECG Signal Processing, Annotation, Gaussian Process Correction, and Interoperable Data Exchange. Manuscript under review; [year].<br><br><span class="who">Mojtahed, H.</span> CardioAnnotate: Browser-Based ECG Annotation, RR Correction, HRV Analysis, and Export (version 0.1.0) [software]. Zenodo; 2026. doi:<a href="https://doi.org/10.5281/zenodo.20820832">10.5281/zenodo.20820832</a>. Live application: <a href="https://cardioannotate.github.io/">https://cardioannotate.github.io/</a>.</div>
+
+    <p class="cite-label">RPT15 Database</p>
+    <div class="cite"><span class="who">Mojtahed, H., Rao, R., Paolini, C., Sarkar, M.</span>. RPT15: An ECG Database with Beat-Level R, P, and T Annotations at Native and Uniform Resampled Sampling Rates. Manuscript under review; [year].<br><br><span class="who">Mojtahed, H.</span>. RPT15: An ECG Database with Beat-Level R, P, and T Peak Annotations at Native and Uniform Resampled Sampling Rates [dataset]. PhysioNet; [year]. doi:[PhysioNet DOI — forthcoming].</div>
+
+  </section>
+
+  <section class="smallprint">
+    <div class="wrap">
+      <p class="sec-label">Data sources &amp; license</p>
+      <p>RPT15 is derived from six open-access PhysioNet databases (MIT-BIH Arrhythmia, Normal Sinus Rhythm, ST Change, Supraventricular Arrhythmia, and Sudden Cardiac Death Holter, and the European ST-T Database), each released under the Open Data Commons Attribution License v1.0. RPT15 is released under CCA 4.0. CardioAnnotate is released under TBD.</p>
+    </div>
+  </section>
+
+  <section class="smallprint">
+    <div class="wrap">
+      <p class="sec-label">Contact</p>
+      <p class="contact">
+        Hamed Mojtahed, PhD<br>
+         <a href="https://orcid.org/0009-0000-6127-9998">ORCID</a><br>
+
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p class="updated">Last updated: 06/25/2026</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  // Build a tiled PQRST trace as an SVG path across the 1200x240 viewBox.
+  var baseline = 150, beatW = 300, beats = 4;
+  function beat(x){
+    // points relative to beat start x, baseline 150
+    return [
+      [x+0,150],[x+40,150],                         // flat
+      [x+50,144],[x+60,138],[x+70,144],[x+80,150],  // P wave
+      [x+100,150],[x+105,158],                      // PR + Q
+      [x+110,150],[x+114,70],[x+119,168],[x+124,150],// R spike + S
+      [x+128,150],[x+168,150],                       // ST
+      [x+185,134],[x+205,126],[x+225,134],[x+248,150],// T wave
+      [x+300,150]                                     // flat to next
+    ];
+  }
+  var pts=[];
+  for(var b=0;b<beats;b++){ pts=pts.concat(beat(b*beatW)); }
+  var d="M "+pts.map(function(p){return p[0]+" "+p[1];}).join(" L ");
+  var path=document.getElementById('ecg');
+  path.setAttribute('d',d);
+
+  // Peak markers over the first beat: P(60,138) R(114,70) T(205,126)
+  var marks=[["P",60,138],["R",114,70],["T",205,126]];
+  var g=document.getElementById('markers');
+  var ns="http://www.w3.org/2000/svg";
+  marks.forEach(function(m){
+    var name=m[0],cx=m[1],cy=m[2];
+    var tick=document.createElementNS(ns,'line');
+    tick.setAttribute('x1',cx);tick.setAttribute('x2',cx);
+    tick.setAttribute('y1',cy-8);tick.setAttribute('y2',cy-26);
+    tick.setAttribute('class','peak-tick');g.appendChild(tick);
+    var dot=document.createElementNS(ns,'circle');
+    dot.setAttribute('cx',cx);dot.setAttribute('cy',cy);dot.setAttribute('r',4);
+    dot.setAttribute('class','peak-dot');g.appendChild(dot);
+    var t=document.createElementNS(ns,'text');
+    t.setAttribute('x',cx);t.setAttribute('y',cy-32);
+    t.setAttribute('class','peak-label');t.textContent=name;g.appendChild(t);
+  });
+
+  // Draw-on animation unless reduced motion is requested.
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+  if(!reduce){
+    var len=path.getTotalLength();
+    path.style.strokeDasharray=len;
+    path.style.strokeDashoffset=len;
+    g.style.opacity=0;
+    path.getBoundingClientRect(); // reflow
+    path.style.transition='stroke-dashoffset 2.4s ease-out';
+    path.style.strokeDashoffset=0;
+    g.style.transition='opacity .6s ease 1.9s';
+    requestAnimationFrame(function(){ g.style.opacity=1; });
+  }
+})();
+</script>
+</body>
+</html>
